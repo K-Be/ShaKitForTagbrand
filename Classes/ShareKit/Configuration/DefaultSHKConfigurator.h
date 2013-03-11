@@ -49,7 +49,8 @@
 - (NSArray*)defaultFavoriteURLSharers;
 - (NSArray*)defaultFavoriteImageSharers;
 - (NSArray*)defaultFavoriteTextSharers;
-- (NSArray*)defaultFavoriteFileSharers;
+- (NSArray*)defaultFavoriteFileSharers __attribute__((deprecated("use defaultFavoriteSharersForMimeType: instead")));
+- (NSArray*)defaultFavoriteSharersForMimeType:(NSString *)mimeType;
 - (NSString*)vkontakteAppId;
 - (NSString*)facebookAppId;
 - (NSString*)facebookLocalAppId;
@@ -59,6 +60,7 @@
 - (NSString*)readItLaterKey;
 - (NSString*)diigoKey;
 - (NSNumber*)forcePreIOS5TwitterAccess;
+- (NSString*)googlePlusClientId;
 - (NSString*)twitterConsumerKey;
 - (NSString*)twitterSecret;
 - (NSString*)twitterCallbackUrl;
@@ -80,6 +82,15 @@
 - (NSNumber*)readabilityUseXAuth;
 - (NSString*)foursquareV2ClientId;
 - (NSString*)foursquareV2RedirectURI;
+- (NSString*)tumblrConsumerKey;
+- (NSString*)tumblrSecret;
+- (NSString*)tumblrCallbackUrl;
+- (NSString*)hatenaConsumerKey;
+- (NSString*)hatenaSecret;
+- (NSString*)hatenaScope;
+- (NSString *)plurkAppKey;
+- (NSString *)plurkAppSecret;
+- (NSString *)plurkCallbackURL;
 - (NSNumber*)shareMenuAlphabeticalOrder;
 - (NSString*)barStyle;
 - (UIColor*)barTintForView:(UIViewController*)vc;
