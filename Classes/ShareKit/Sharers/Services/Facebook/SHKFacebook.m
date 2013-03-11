@@ -296,14 +296,6 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	return result;
 }
 
-+ (void)clearSavedItem{
-	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-
-	[defaults removeObjectForKey:kSHKStoredItemKey];
-	[defaults removeObjectForKey:kSHKStoredActionKey];
-	[defaults synchronize];
-}
-
 + (void)logout
 {
 	[SHKFacebook clearSavedItem];
