@@ -348,6 +348,22 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	[self openSessionWithAllowLoginUI:YES];
 }
 
+- (BOOL)authorizeWithoutPost
+{
+	BOOL result = [self isAuthorized];
+	
+	if (!result)
+	{
+		NSAssert(authingSHKFacebook == nil, @"ShareKit: auth loop logic error - will lead to leaks");
+		authingSHKFacebook = self;
+		[self retain];
+		
+		result = [self openSessionWithAllowLoginUI:YES];
+	}
+	
+	return result;
+}
+
 + (void)clearSavedItem{
 	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
