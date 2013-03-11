@@ -27,6 +27,16 @@
 #import "SHKVkontakteOAuthView.h"
 #import "SHKVkontakte.h"
 
+@interface SHKVkontakteOAuthView ()
+{
+	UIBarButtonItem* _cancelItem;
+}
+
+- (void)cancelAction:(id)sender;
+
+@end
+
+
 @implementation SHKVkontakteOAuthView
 @synthesize vkWebView, appID, delegate;
 
@@ -49,14 +59,23 @@
 {
 	[super viewDidLoad];
 	
+	if (!_cancelItem)
+	{
+		_cancelItem = [[[UIBarButtonItem alloc] initWithTitle:SHKLocalizedString(@"Cancel")
+																	  style:UIBarButtonItemStyleBordered
+																	 target:self
+																	 action:@selector(cancelAction:)] autorelease];
+	}
+	self.navigationItem.leftBarButtonItem = _cancelItem;
+	
 	if(!vkWebView)
 	{
 		self.vkWebView = [[[UIWebView alloc] initWithFrame:self.view.bounds] autorelease];
 		vkWebView.delegate = self;
 		vkWebView.scalesPageToFit = YES;
 		self.vkWebView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-		[self.view addSubview:vkWebView];
 	}
+	[self.view addSubview:vkWebView];
 	
 	if(!appID) 
 	{
@@ -84,6 +103,12 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
     return YES;
+}
+
+
+- (void)cancelAction:(id)sender
+{
+	[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
 }
 
 #pragma mark - Web View Delegate
