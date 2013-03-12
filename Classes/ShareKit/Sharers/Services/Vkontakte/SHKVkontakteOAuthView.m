@@ -109,6 +109,7 @@
 - (void)cancelAction:(id)sender
 {
 	[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+	[(SHKVkontakte *)delegate sendDidCancel];
 }
 
 #pragma mark - Web View Delegate
@@ -119,6 +120,7 @@
 
 	if ([[URL absoluteString] isEqualToString:@"http://api.vk.com/blank.html#error=access_denied&error_reason=user_denied&error_description=User%20denied%20your%20request"]) {
 		[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+		[(SHKVkontakte *)delegate sendDidCancel];
 		return NO;
 	}
 	SHKLog(@"Request: %@", [URL absoluteString]); 
