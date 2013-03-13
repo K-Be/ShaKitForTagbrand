@@ -286,9 +286,11 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	
 	if (!result)
 	{
-		NSAssert(authingSHKFacebook == nil, @"ShareKit: auth loop logic error - will lead to leaks");
-		authingSHKFacebook = self;
-		[self retain];
+		if (authingSHKFacebook != nil && authingSHKFacebook != self)
+		{
+			[authingSHKFacebook release];
+		}
+		authingSHKFacebook = [self retain];
 		
 		result = [self openSessionWithAllowLoginUI:YES];
 	}
