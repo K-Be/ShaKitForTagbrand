@@ -78,7 +78,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 + (NSString *)sharerTitle
 {
-	return @"Twitter";
+	return SHKLocalizedString(@"Twitter");
 }
 
 + (BOOL)canShareURL
@@ -268,7 +268,16 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 																							value:@"client_auth"] autorelease];
 		
 		[oRequest setParameters:[NSArray arrayWithObjects:username, password, mode, nil]];
-	}
+	} else {
+        if (self.pendingAction == SHKPendingRefreshToken)
+        {
+            if (accessToken.sessionHandle != nil)
+                [oRequest setOAuthParameterName:@"oauth_session_handle" withValue:accessToken.sessionHandle];
+        }
+		
+        else
+            [oRequest setOAuthParameterName:@"oauth_verifier" withValue:[authorizeResponseQueryVars objectForKey:@"oauth_verifier"]];
+    }
 }
 
 - (void)tokenAccessTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data 
@@ -341,16 +350,16 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (BOOL)validateItem {
 	
-	BOOL result = NO;
-	
+	if (self.item.shareType == SHKShareTypeUserInfo) return YES;
+    
 	BOOL isValid = [super validateItem];
 	NSString *status = [self.item customValueForKey:@"status"];
 	
-	if (isValid && status.length <= 140 && status.length > 0) {
-		result = YES;
-	}
-	
-	return result;
+	if (isValid && 0 < status.length && status.length <= 140) {
+		return YES;
+	} else {
+        return NO;
+    }
 }
 
 - (BOOL)send

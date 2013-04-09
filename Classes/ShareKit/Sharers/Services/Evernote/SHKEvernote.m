@@ -47,7 +47,7 @@
 #pragma mark -
 #pragma mark Configuration : Service Defination
 
-+ (NSString *)sharerTitle { return @"Evernote"; }
++ (NSString *)sharerTitle { return SHKLocalizedString(@"Evernote"); }
 + (BOOL)canShareURL   { return YES; }
 + (BOOL)canShareImage { return YES; }
 + (BOOL)canShareText  { return YES; }
@@ -145,7 +145,7 @@
     note.title = self.item.title.length > 0 ? self.item.title :( [note titleIsSet] ? note.title : SHKLocalizedString(@"Untitled") );
     
     if(![note tagNamesIsSet]&&self.item.tags)
-    	[note setTagNames:self.item.tags];
+    	[note setTagNames:[self.item.tags mutableCopy]];
     
     if(![note contentIsSet]) {
         NSMutableString* contentStr = [[NSMutableString alloc] initWithString:kENMLPrefix];
