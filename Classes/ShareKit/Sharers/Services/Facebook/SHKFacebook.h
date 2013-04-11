@@ -46,5 +46,6 @@
 - (void)cancelPendingRequests;
 
 - (BOOL)authorizeWithoutPost;
+- (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
 
 @end

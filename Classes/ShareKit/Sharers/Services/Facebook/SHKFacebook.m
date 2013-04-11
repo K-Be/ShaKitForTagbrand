@@ -44,7 +44,6 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 
 - (void)showFacebookForm;
 
-- (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
 - (void)sessionStateChanged:(FBSession *)session
                       state:(FBSessionState) state
                       error:(NSError *)error;
