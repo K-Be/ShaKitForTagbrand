@@ -28,6 +28,8 @@
 #import "SHKConfiguration.h"
 #import "SHKMail.h"
 
+#define MAX_ATTACHMENT_SIZE 10*1024*1024 //10mb
+
 @implementation SHKMail
 
 #pragma mark -
@@ -53,9 +55,21 @@
 	return YES;
 }
 
-+ (BOOL)canShareFileOfMimeType:(NSString *)mimeType size:(NSUInteger)size
++ (BOOL)canShareVideo
 {
-	return YES;
+    return YES;
+}
+
++ (BOOL)canShareFile:(SHKFile *)file {
+    
+    /*
+     * Limiting to 10MB, based on common max attachment sizes listed here:
+     * http://en.wikipedia.org/wiki/Email_attachment
+     * http://help.sizablesend.com/what-are-the-attachment-size-limits-of-major-email-providers/
+     */
+    
+    BOOL result = file.size <= MAX_ATTACHMENT_SIZE;
+    return result;
 }
 
 + (BOOL)shareRequiresInternetConnection
@@ -81,8 +95,6 @@
 {
 	return YES;
 }
-
-
 
 #pragma mark -
 #pragma mark Share API Methods
@@ -128,9 +140,9 @@
 				body = urlStr;
 		}
 		
-		if (self.item.data)
+		if (self.item.file)
 		{
-			NSString *attachedStr = SHKLocalizedString(@"Attached: %@", self.item.title ? self.item.title : self.item.filename);
+			NSString *attachedStr = SHKLocalizedString(@"Attached: %@", self.item.title ? self.item.title : self.item.file.filename);
 			
 			if (isHTML)
 				body = [body stringByAppendingFormat:@"%@%@", separator, attachedStr];
@@ -150,8 +162,8 @@
 		}
 	}
 	
-	if (self.item.data)		
-		[mailController addAttachmentData:self.item.data mimeType:self.item.mimeType fileName:self.item.filename];
+	if (self.item.file)
+		[mailController addAttachmentData:self.item.file.data mimeType:self.item.file.mimeType fileName:self.item.file.filename];
 	
 	NSArray *toRecipients = self.item.mailToRecipients;
     if (toRecipients)
