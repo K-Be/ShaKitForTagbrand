@@ -114,9 +114,10 @@
     return @"";
 }
 
-// Read It Later - http://readitlaterlist.com/api/signup/
-- (NSString*)readItLaterKey {
-	return @"";
+//Pocket v3 consumer key. http://getpocket.com/developer/apps/. If you have old read it later app, you should obtain new key.
+- (NSString *)pocketConsumerKey {
+    
+    return @"";
 }
 
 // Diigo - http://www.diigo.com/api_keys/new/
@@ -313,22 +314,46 @@
 	return @"";
 }
 
-/*
- *  Dropbox - https://www.dropbox.com/developers/apps
- *  1. ShareKit-info.plist -> URL Types ->URL Schemes -> Item x -> db-APP_KEY
- *  2. Root Folder: kDBRootAppFolder (==  @"sandbox") or kDBRootDropbox (== @"dropbox")
- *  3. In additional you should setup App folder name  https://www.dropbox.com/developers/apps
- *
- */
+// Dropbox - https://www.dropbox.com/developers/apps
 - (NSString *) dropboxAppKey {
     return @"";
 }
 - (NSString *) dropboxAppSecret {
     return @"";
 }
+
+
+// Buffer
+/*
+ 1 - Set up an app at https://bufferapp.com/developers/apps/create
+ 2 - Once the app is set up this requires a URL Scheme to be set up within your apps info.plist. bufferXXXX where XXXX is your client ID, this will enable Buffer authentication.
+ 3 - Set bufferShouldShortenURLS. NO will use ShareKit's shortening (if available). YES will use Buffer's shortener once the sheet is autheorised and presented.
+*/
+
+- (NSString*)bufferClientID
+{
+	return @"";
+}
+
+- (NSString*)bufferClientSecret
+{
+	return @"";
+}
+
+-(BOOL)bufferShouldShortenURLS {
+    return YES;
+}
+
+/* 
+ This setting should correspond with permission type set during your app registration with Dropbox. You can choose from these two values:
+    @"sandbox" (set if you chose permission type "App folder" == kDBRootAppFolder. You will have access only to the app folder you set in  https://www.dropbox.com/developers/apps)
+    @"dropbox" (set if you chose permission type "Full dropbox" == kDBRootDropbox)
+*/
 - (NSString *) dropboxRootFolder {
     return @"sandbox";
 }
+
+// if you set NO, a dialogue will appear where user can choose different filename, otherwise the file is silently overwritten.
 -(BOOL)dropboxShouldOverwriteExistedFile {
     return YES;
 }
@@ -391,7 +416,7 @@
  These values are used to define the default favorite sharers appearing on ShareKit's action sheet.
  */
 - (NSArray*)defaultFavoriteURLSharers {
-    return [NSArray arrayWithObjects:@"SHKTwitter",@"SHKFacebook", @"SHKReadItLater", nil];
+    return [NSArray arrayWithObjects:@"SHKTwitter",@"SHKFacebook", @"SHKPocket", nil];
 }
 - (NSArray*)defaultFavoriteImageSharers {
     return [NSArray arrayWithObjects:@"SHKMail",@"SHKFacebook", @"SHKCopy", nil];

@@ -28,12 +28,15 @@
 // TODO - SHKTwitter supports offline sharing, however the url cannot be shortened without an internet connection.  Need a graceful workaround for this.
 
 
-#import "SHKConfiguration.h"
+
 #import "SHKTwitter.h"
+
+#import "SharersCommonHeaders.h"
 #import "SHKXMLResponseParser.h"
 #import "SHKiOSTwitter.h"
 #import "SHKiOS5Twitter.h"
 #import "NSMutableDictionary+NSNullsToEmptyStrings.h"
+
 #import <Social/Social.h>
 
 static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
@@ -107,14 +110,6 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 }
 
 #pragma mark -
-#pragma mark Configuration : Dynamic Enable
-
-- (BOOL)shouldAutoShare
-{
-	return NO;
-}
-
-#pragma mark -
 #pragma mark Commit Share
 
 - (void)share {
@@ -130,6 +125,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	}
 	else
 	{
+        [self prepareItem];
         [super share];
 	}
 }
@@ -178,19 +174,23 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	{
 		status = self.item.shareType == SHKShareTypeText ? self.item.text : self.item.title;
 	}
-
-	NSString *hashtags = [self tagStringJoinedBy:@" " allowedCharacters:[NSCharacterSet alphanumericCharacterSet]
-	                                   tagPrefix:@"#" tagSuffix:nil];
-	if ([hashtags length] > 0)
-	{
-		status = [NSString stringWithFormat:@"%@ %@", status, hashtags];
-	}
+	
+	//Only add the additional tags / URL if user has authorized his account
+	if(self.isAuthorized) {
+		NSString *hashtags = [self tagStringJoinedBy:@" " allowedCharacters:[NSCharacterSet alphanumericCharacterSet]
+		                                   tagPrefix:@"#" tagSuffix:nil];
+		if ([hashtags length] > 0)
+		{
+			status = [NSString stringWithFormat:@"%@ %@", status, hashtags];
+		}
     
-    if (self.item.URL)
-    {
-        NSString *URLstring = [self.item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        status = [NSString stringWithFormat:@"%@ %@", status, URLstring];
-    }
+		if (self.item.URL)
+		{
+			NSString *URLstring = [self.item.URL.absoluteString stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+			status = [NSString stringWithFormat:@"%@ %@", status, URLstring];
+		}	
+	}
+	
     
 	[self.item setCustomValue:status forKey:@"status"];
 }
@@ -273,10 +273,9 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
         {
             if (accessToken.sessionHandle != nil)
                 [oRequest setOAuthParameterName:@"oauth_session_handle" withValue:accessToken.sessionHandle];
-        }
-		
-        else
+        } else if([authorizeResponseQueryVars objectForKey:@"oauth_verifier"]) {
             [oRequest setOAuthParameterName:@"oauth_verifier" withValue:[authorizeResponseQueryVars objectForKey:@"oauth_verifier"]];
+        }
     }
 }
 
@@ -309,8 +308,6 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (void)show
 {
-	[self prepareItem];
-    
     if (self.item.shareType == SHKShareTypeUserInfo)
 	{
 		[self setQuiet:YES];
@@ -394,7 +391,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (void)sendUserInfo {
 	
-	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1/account/verify_credentials.json"]
+	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/account/verify_credentials.json"]
 																						 consumer:consumer
 																							 token:accessToken
 																							 realm:nil
@@ -437,7 +434,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (void)sendStatus
 {
-	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1/statuses/update.json"]
+	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://api.twitter.com/1.1/statuses/update.json"]
 																						 consumer:consumer
 																							 token:accessToken
 																							 realm:nil
@@ -482,9 +479,9 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	
 	NSURL *serviceURL = nil;
 	if([self.item customValueForKey:@"profile_update"]){//update_profile does not work
-		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/update_profile_image.json"];
+		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1.1/account/update_profile_image.json"];
 	} else {
-		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/verify_credentials.json"];
+		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1.1/account/verify_credentials.json"];
 	}
 	
 	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
@@ -512,7 +509,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 																	 realm:@"https://api.twitter.com/"
 													 signatureProvider:signatureProvider];
 		[oRequest setHTTPMethod:@"POST"];
-		[oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
+		[oRequest setValue:@"https://api.twitter.com/1.1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
 		[oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
 	}
 	
@@ -616,7 +613,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	// remove it so in case of other failures this doesn't get hit again
 	[self.item setCustomValue:nil forKey:@"followMe"];
 	
-	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.twitter.com/1/friendships/create/%@.json", SHKCONFIG(twitterUsername)]]
+	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.twitter.com/1.1/friendships/create/%@.json", SHKCONFIG(twitterUsername)]]
 																						 consumer:consumer
 																							 token:accessToken
 																							 realm:nil

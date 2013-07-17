@@ -25,7 +25,10 @@
 //
 
 #import "SHKVkontakteOAuthView.h"
+
 #import "SHKVkontakte.h"
+#import "SHK.h"
+#import "Debug.h"
 
 @interface SHKVkontakteOAuthView ()
 {
@@ -52,6 +55,19 @@
 {
 	[super didReceiveMemoryWarning];
 	
+}
+
+- (void) closeView
+{
+    [[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+}
+
+- (void) addCloseButton
+{
+    self.navigationItem.leftBarButtonItem = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonItemStyleBordered
+                                                                                           target:self
+                                                                                           action:@selector(closeView)]
+                                             autorelease];
 }
 
 #pragma mark - View lifecycle
