@@ -430,7 +430,10 @@
         if (photoDict && photoId)
         {
             NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
-            
+			  if (self.item.URL)
+			  {
+				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+			  }
             //processing to next request
             [self sendRequest:postToWallLink withCaptcha:NO];
             return;
@@ -732,6 +735,7 @@
         {
             //processing to next request
             NSString *saveWallPhoto = [NSString stringWithFormat:@"https://api.vk.com/method/photos.saveWallPhoto?owner_id=%@&access_token=%@&server=%@&photo=%@&hash=%@", self.accessUserId, self.accessToken ,server, [self URLEncodedString:photo], hash];
+			  
             [self sendRequest:saveWallPhoto withCaptcha:NO isFinishedSelector:@selector(didFinishSaveWallPhotoRequest:)];
         }
         else if (file)
