@@ -174,6 +174,25 @@
 }
 
 
+- (void)promptAuthorizationWithAdditionalScopes:(NSString*)scopes
+{
+	SHKVkontakteOAuthView *rootView = [[SHKVkontakteOAuthView alloc] init];
+	rootView.appID = SHKCONFIG(vkontakteAppId);
+	rootView.delegate = self;
+	rootView.additionalScopes = scopes;
+	
+	// force view to load so we can set textView text
+	[rootView view];
+	
+	self.navigationBar.tintColor = SHKCONFIG_WITH_ARGUMENT(barTintForView:,rootView);
+	
+	[self pushViewController:rootView animated:NO];
+	[rootView release];
+	
+	[[SHK currentHelper] showViewController:self];
+}
+
+
 - (void)getAccessCode
 {
     //we can request AccessCode only if we already authorized

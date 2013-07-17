@@ -47,4 +47,7 @@ static NSString *const kSHKVkonakteUserInfo=@"kSHKVkontakteUserInfo";
 - (void)authComplete;
 - (void)getAccessCode;
 
+
+- (void)promptAuthorizationWithAdditionalScopes:(NSString*)scopes;
+
 @end

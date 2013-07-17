@@ -36,6 +36,7 @@
 @property (nonatomic, retain) id delegate;
 @property (nonatomic, retain) UIWebView *vkWebView;
 @property (nonatomic, retain) NSString *appID;
+@property (nonatomic, strong) NSString* additionalScopes;
 
 + (NSString*)stringBetweenString:(NSString*)start
                        andString:(NSString*)end 
