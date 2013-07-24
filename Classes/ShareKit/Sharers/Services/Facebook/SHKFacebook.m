@@ -58,6 +58,14 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 @property (readwrite,retain) NSMutableSet* pendingConnections;
 @end
 
+
+@interface SHKFacebook (Private)
+
+- (FBSessionLoginBehavior)getLoginBehavior;
+
+@end
+
+
 @implementation SHKFacebook
 
 @synthesize pendingConnections;
@@ -125,7 +133,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		if (allowLoginUI) [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Logging In...")];
         
         [FBSession setActiveSession:session];
-        [session openWithBehavior:FBSessionLoginBehaviorUseSystemAccountIfPresent
+		 [session openWithBehavior:[self getLoginBehavior]
 				completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
 					if (allowLoginUI) [[SHKActivityIndicator currentIndicator] hide];
 					[self sessionStateChanged:session state:state error:error];
@@ -759,5 +767,38 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
     
  	[self tryToSend];
 }  
+
+@end
+
+#define SHK_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+
+#pragma mark -
+@implementation SHKFacebook (Private)
+
+- (FBSessionLoginBehavior)getLoginBehavior
+{
+	FBSessionLoginBehavior behavior = FBSessionLoginBehaviorWithFallbackToWebView;
+	NSString* facebookAccountIdentifier = @"com.apple.facebook";
+	if (SHK_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6"))
+	{
+		facebookAccountIdentifier = ACAccountTypeIdentifierFacebook;
+	}
+	ACAccountStore* accountsStore = [[ACAccountStore alloc] init];
+	NSArray* accounts = [accountsStore accounts];
+	NSInteger indexOfFacebookAccount = [accounts indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+		ACAccount* account = obj;
+		ACAccountType* accountType = [account accountType];
+		NSString* typeIdentifier = [accountType identifier];
+		BOOL isNeedAccount = [typeIdentifier compare:facebookAccountIdentifier options:NSCaseInsensitiveSearch] == NSOrderedSame;
+		return isNeedAccount;
+	}];
+	
+	if (indexOfFacebookAccount != NSNotFound)
+	{
+		behavior = FBSessionLoginBehaviorUseSystemAccountIfPresent;
+	}
+	
+	return behavior;
+}
 
 @end
