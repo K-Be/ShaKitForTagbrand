@@ -783,8 +783,8 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	{
 		facebookAccountIdentifier = ACAccountTypeIdentifierFacebook;
 	}
-	ACAccountStore* accountsStore = [[ACAccountStore alloc] init];
-	NSArray* accounts = [accountsStore accounts];
+	ACAccountStore* accountsStore = [[[ACAccountStore alloc] init] autorelease];
+	NSArray* accounts = [[[accountsStore accounts] retain] autorelease];
 	NSInteger indexOfFacebookAccount = [accounts indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		ACAccount* account = obj;
 		ACAccountType* accountType = [account accountType];
