@@ -45,6 +45,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 
 @interface SHKFacebook()
 
+- (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
 - (void)showFacebookForm;
 
 - (void)sessionStateChanged:(FBSession *)session

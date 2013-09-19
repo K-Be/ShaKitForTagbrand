@@ -389,14 +389,18 @@
         
         if ([self isRequestFinishedWithoutError:request])
         {
-            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
-			  if (self.item.URL)
-			  {
-				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
-			  }
-            //processing to next request
-            [self sendRequest:postToWallLink withCaptcha:NO];
-            return;
+            // convert to JSON
+            NSError *error = nil;
+            NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:request.data options:NSJSONReadingMutableContainers error:&error];
+            NSString *upload_url = [[responseDict objectForKey:@"response"] objectForKey:@"upload_url"];
+            if (upload_url)
+            {
+                UIImage *image = self.item.image;
+                NSData *imageData = UIImageJPEGRepresentation(image, 1.0f);
+                //processing to next request
+                [self sendPOSTRequest:upload_url withImageData:imageData];
+                return;
+            }
         }
     }];
 }
@@ -420,6 +424,71 @@
         }
     }];
 }
+
+- (void)didReceiveDocumentUploadUrl:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSString *upload_url = [[responseDict objectForKey:@"response"] objectForKey:@"upload_url"];
+        if (upload_url)
+        {
+            [self sendPOSTRequest:upload_url withFileData:self.item.file.data fileName:self.item.file.filename mime:self.item.file.mimeType];
+            return;
+        }
+    }
+}
+
+- (void)didFinishSaveWallPhotoRequest:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSDictionary *photoDict = [[responseDict objectForKey:@"response"] lastObject];
+        NSString *photoId = [photoDict objectForKey:@"id"];
+        if (photoDict && photoId)
+        {
+            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
+			  if (self.item.URL)
+			  {
+				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+			  }
+            //processing to next request
+            [self sendRequest:postToWallLink withCaptcha:NO];
+            return;
+        }
+    }
+}
+
+- (void)didFinishSaveDocumentRequest:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSDictionary *documentDict = [[responseDict objectForKey:@"response"] lastObject];
+        NSString *ownerId = [documentDict objectForKey:@"owner_id"];
+        NSString *documentId = [documentDict objectForKey:@"did"];
+        if (documentDict && ownerId && documentId)
+        {
+            NSString *attachment = [NSString stringWithFormat:@"doc%@_%@", ownerId, documentId];
+            if (self.item.URL)
+                attachment = [attachment stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], attachment];
+            
+            //processing to next request
+            [self sendRequest:postToWallLink withCaptcha:NO];
+            return;
+        }
+    }
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -654,15 +723,67 @@
         
         if ([self isRequestFinishedWithoutError:request])
         {
-            //processing to next request
-            NSString *saveWallPhoto = [NSString stringWithFormat:@"https://api.vk.com/method/photos.saveWallPhoto?owner_id=%@&access_token=%@&server=%@&photo=%@&hash=%@", self.accessUserId, self.accessToken ,server, [self URLEncodedString:photo], hash];
-			  
-            [self sendRequest:saveWallPhoto withCaptcha:NO isFinishedSelector:@selector(didFinishSaveWallPhotoRequest:)];
-        }
-        else if (file)
-        {
-            NSString *saveWallPhoto = [NSString stringWithFormat:@"https://api.vk.com/method/docs.save?owner_id=%@&access_token=%@&file=%@", self.accessUserId, self.accessToken, [self URLEncodedString:file]];
-            [self sendRequest:saveWallPhoto withCaptcha:NO isFinishedSelector:@selector(didFinishSaveDocumentRequest:)];
+            // convert to JSON
+            NSError *error = nil;
+            NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:request.data options:NSJSONReadingMutableContainers error:&error];
+            NSString *hash = [responseDict objectForKey:@"hash"];
+            NSString *photo = [responseDict objectForKey:@"photo"];
+            NSString *server = [responseDict objectForKey:@"server"];
+            NSString *file = [responseDict objectForKey:@"file"];
+            
+            if (hash && photo && server)
+            {
+                //processing to next request
+                NSString *saveWallPhoto = [NSString stringWithFormat:@"https://api.vk.com/method/photos.saveWallPhoto?owner_id=%@&access_token=%@&server=%@&photo=%@&hash=%@", self.accessUserId, self.accessToken ,server, [self URLEncodedString:photo], hash];
+                
+                [self sendRequest:saveWallPhoto withCaptcha:NO completion:^(SHKRequest *request) {
+                    
+                    if ([self isRequestFinishedWithoutError:request])
+                    {
+                        // convert to JSON
+                        NSError *error = nil;
+                        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:request.data options:NSJSONReadingMutableContainers error:&error];
+                        NSDictionary *photoDict = [[responseDict objectForKey:@"response"] lastObject];
+                        NSString *photoId = [photoDict objectForKey:@"id"];
+                        if (photoDict && photoId)
+                        {
+                            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
+                            
+                            //processing to next request
+                            [self sendRequest:postToWallLink withCaptcha:NO];
+                            return;
+                        }
+                    }
+                }];
+            }
+            else if (file)
+            {
+                NSString *saveWallPhoto = [NSString stringWithFormat:@"https://api.vk.com/method/docs.save?owner_id=%@&access_token=%@&file=%@", self.accessUserId, self.accessToken, [self URLEncodedString:file]];
+                
+                [self sendRequest:saveWallPhoto withCaptcha:NO completion:^(SHKRequest *request) {
+                    
+                    if ([self isRequestFinishedWithoutError:request])
+                    {
+                        // convert to JSON
+                        NSError *error = nil;
+                        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:request.data options:NSJSONReadingMutableContainers error:&error];
+                        NSDictionary *documentDict = [[responseDict objectForKey:@"response"] lastObject];
+                        NSString *ownerId = [documentDict objectForKey:@"owner_id"];
+                        NSString *documentId = [documentDict objectForKey:@"did"];
+                        if (documentDict && ownerId && documentId)
+                        {
+                            NSString *attachment = [NSString stringWithFormat:@"doc%@_%@", ownerId, documentId];
+                            if (self.item.URL)
+                                attachment = [attachment stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+                            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], attachment];
+                            
+                            //processing to next request
+                            [self sendRequest:postToWallLink withCaptcha:NO];
+                            return;
+                        }
+                    }
+                }];
+            }
         }
     };
     
