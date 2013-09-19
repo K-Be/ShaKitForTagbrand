@@ -176,7 +176,7 @@
 	self.navigationBar.tintColor = SHKCONFIG_WITH_ARGUMENT(barTintForView:,rootView);
 	
 	[self pushViewController:rootView animated:NO];
-	[rootView release];
+//	[rootView release];
 	
 	[[SHK currentHelper] showViewController:self];
 }

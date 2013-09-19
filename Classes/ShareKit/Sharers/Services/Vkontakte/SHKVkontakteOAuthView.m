@@ -72,10 +72,10 @@
 	
 	if (!_cancelItem)
 	{
-		_cancelItem = [[[UIBarButtonItem alloc] initWithTitle:SHKLocalizedString(@"Cancel")
+		_cancelItem = /*[*/[[UIBarButtonItem alloc] initWithTitle:SHKLocalizedString(@"Cancel")
 																	  style:UIBarButtonItemStyleBordered
 																	 target:self
-																	 action:@selector(cancelAction:)] autorelease];
+																			action:@selector(cancelAction:)];/* autorelease];*/
 	}
 	self.navigationItem.leftBarButtonItem = _cancelItem;
 	

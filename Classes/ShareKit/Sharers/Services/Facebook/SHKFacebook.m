@@ -301,9 +301,9 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	{
 		if (authingSHKFacebook != nil && authingSHKFacebook != self)
 		{
-			[authingSHKFacebook release];
+			authingSHKFacebook = nil;
 		}
-		authingSHKFacebook = [self retain];
+		authingSHKFacebook = self;
 		
 		result = [self openSessionWithAllowLoginUI:YES];
 	}
@@ -756,8 +756,8 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	{
 		facebookAccountIdentifier = ACAccountTypeIdentifierFacebook;
 	}
-	ACAccountStore* accountsStore = [[[ACAccountStore alloc] init] autorelease];
-	NSArray* accounts = [[[accountsStore accounts] retain] autorelease];
+	ACAccountStore* accountsStore = [[ACAccountStore alloc] init];
+	NSArray* accounts = [accountsStore accounts];
 	NSInteger indexOfFacebookAccount = [accounts indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
 		ACAccount* account = obj;
 		ACAccountType* accountType = [account accountType];

@@ -241,7 +241,7 @@
 {
 	if (self.progress == nil)
 	{
-        self.progress = [[[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar] autorelease];
+        self.progress = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];
         
 		self.progress.frame = CGRectMake(15.0f,
                                    15.0f,
