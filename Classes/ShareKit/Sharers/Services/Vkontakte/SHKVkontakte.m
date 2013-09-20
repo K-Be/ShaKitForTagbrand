@@ -131,6 +131,12 @@
     return YES;
 }
 
+
+- (BOOL)shouldAutoShare
+{
+	return YES;
+}
+
 #pragma mark -
 #pragma mark Authentication
 
