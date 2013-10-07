@@ -28,6 +28,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SHKSharer.h"
+#import "FacebookSDK.h"
 
 @interface SHKFacebook : SHKSharer
 
@@ -45,5 +46,6 @@
 
 - (BOOL)authorizeWithoutPost;
 - (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
+- (void)requestPostPermissionsWithCompletion:(void(^)(FBSession *session, NSError *error))competion;
 
 @end

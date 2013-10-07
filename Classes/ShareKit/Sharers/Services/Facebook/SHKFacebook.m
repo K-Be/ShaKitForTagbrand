@@ -142,6 +142,41 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
     return result;
 }
 
+
+- (void)requestPostPermissionsWithCompletion:(void(^)(FBSession *session, NSError *error))competion
+{
+		if ([FBSession.activeSession.permissions
+			  indexOfObject:@"publish_actions"] == NSNotFound) {	// we need at least this.SHKCONFIG(facebookWritePermissions
+			// No permissions found in session, ask for it
+			[self saveItemForLater:SHKPendingNone];
+			[[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Authenticating...")];
+			if(requestingPermisSHKFacebook == nil){
+				requestingPermisSHKFacebook = self;
+			}
+			[FBSession.activeSession requestNewPublishPermissions:SHKCONFIG(facebookWritePermissions)
+															  defaultAudience:FBSessionDefaultAudienceFriends
+															completionHandler:^(FBSession *session, NSError *error) {
+																[[SHKActivityIndicator currentIndicator] hide];
+																requestingPermisSHKFacebook = nil;
+																if (error) {
+																	UIAlertView *alertView = [[UIAlertView alloc]
+																									  initWithTitle:@"Error"
+																									  message:error.localizedDescription
+																									  delegate:nil
+																									  cancelButtonTitle:@"OK"
+																									  otherButtonTitles:nil];
+																	[alertView show];
+																}else{
+																	// If permissions granted, publish the story
+																	competion(session, error);
+																}
+																// the session watcher handles the error
+															}];
+		} else {
+			competion(FBSession.activeSession, nil);
+		}
+}
+
 /*
  * Callback for session changes.
  */
@@ -154,7 +189,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		if(requestingPermisSHKFacebook == self){
 			// in this case, we basically want to ignore the state change because the
 			// completion handler for the permission request handles the post.
-			// this happens when the permissions just get extended 
+			// this happens when the permissions just get extended
 		}else{
 			[self restoreItem];
 			
