@@ -486,7 +486,11 @@
             if (self.item.URL)
                 attachment = [attachment stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
             NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], attachment];
-            
+           if (self.item.URL)
+			  {
+				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+			  }
+			  
             //processing to next request
             [self sendRequest:postToWallLink withCaptcha:NO];
             return;
@@ -754,7 +758,10 @@
                         if (photoDict && photoId)
                         {
                             NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
-                            
+									if (self.item.URL)
+									{
+										postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+									}
                             //processing to next request
                             [self sendRequest:postToWallLink withCaptcha:NO];
                             return;
