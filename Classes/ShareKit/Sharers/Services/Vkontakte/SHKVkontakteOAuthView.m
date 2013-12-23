@@ -30,6 +30,16 @@
 #import "SHK.h"
 #import "Debug.h"
 
+@interface SHKVkontakteOAuthView ()
+{
+	UIBarButtonItem* _cancelItem;
+}
+
+- (void)cancelAction:(id)sender;
+
+@end
+
+
 @implementation SHKVkontakteOAuthView
 @synthesize vkWebView, appID, delegate;
 
@@ -60,16 +70,23 @@
 {
 	[super viewDidLoad];
 	
-    [self addCloseButton];
-    
+	if (!_cancelItem)
+	{
+		_cancelItem = /*[*/[[UIBarButtonItem alloc] initWithTitle:SHKLocalizedString(@"Cancel")
+																	  style:UIBarButtonItemStyleBordered
+																	 target:self
+																			action:@selector(cancelAction:)];/* autorelease];*/
+	}
+	self.navigationItem.leftBarButtonItem = _cancelItem;
+	
 	if(!vkWebView)
 	{
 		self.vkWebView = [[UIWebView alloc] initWithFrame:self.view.bounds];
 		vkWebView.delegate = self;
 		vkWebView.scalesPageToFit = YES;
 		self.vkWebView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-		[self.view addSubview:vkWebView];
 	}
+	[self.view addSubview:vkWebView];
 	
 	if(!appID) 
 	{
@@ -103,6 +120,13 @@
     return YES;
 }
 
+
+- (void)cancelAction:(id)sender
+{
+	[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+	[(SHKVkontakte *)delegate sendDidCancel];
+}
+
 #pragma mark - Web View Delegate
 
 - (BOOL)webView:(UIWebView *)aWbView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType {
@@ -111,6 +135,7 @@
 
 	if ([[URL absoluteString] isEqualToString:@"http://api.vk.com/blank.html#error=access_denied&error_reason=user_denied&error_description=User%20denied%20your%20request"]) {
 		[[SHK currentHelper] hideCurrentViewControllerAnimated:YES];
+		[(SHKVkontakte *)delegate sendDidCancel];
 		return NO;
 	}
 	SHKLog(@"Request: %@", [URL absoluteString]); 

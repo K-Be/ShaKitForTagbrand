@@ -131,6 +131,12 @@
     return YES;
 }
 
+
+- (BOOL)shouldAutoShare
+{
+	return YES;
+}
+
 #pragma mark -
 #pragma mark Authentication
 
@@ -158,6 +164,25 @@
 	self.navigationBar.tintColor = SHKCONFIG_WITH_ARGUMENT(barTintForView:,rootView);
 	
 	[self pushViewController:rootView animated:NO];
+	
+	[[SHK currentHelper] showViewController:self];
+}
+
+
+- (void)promptAuthorizationWithAdditionalScopes:(NSString*)scopes
+{
+	SHKVkontakteOAuthView *rootView = [[SHKVkontakteOAuthView alloc] init];
+	rootView.appID = SHKCONFIG(vkontakteAppId);
+	rootView.delegate = self;
+	rootView.additionalScopes = scopes;
+	
+	// force view to load so we can set textView text
+	[rootView view];
+	
+	self.navigationBar.tintColor = SHKCONFIG_WITH_ARGUMENT(barTintForView:,rootView);
+	
+	[self pushViewController:rootView animated:NO];
+//	[rootView release];
 	
 	[[SHK currentHelper] showViewController:self];
 }
@@ -405,6 +430,75 @@
         }
     }];
 }
+
+- (void)didReceiveDocumentUploadUrl:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSString *upload_url = [[responseDict objectForKey:@"response"] objectForKey:@"upload_url"];
+        if (upload_url)
+        {
+            [self sendPOSTRequest:upload_url withFileData:self.item.file.data fileName:self.item.file.filename mime:self.item.file.mimeType];
+            return;
+        }
+    }
+}
+
+- (void)didFinishSaveWallPhotoRequest:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSDictionary *photoDict = [[responseDict objectForKey:@"response"] lastObject];
+        NSString *photoId = [photoDict objectForKey:@"id"];
+        if (photoDict && photoId)
+        {
+            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
+			  if (self.item.URL)
+			  {
+				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+			  }
+            //processing to next request
+            [self sendRequest:postToWallLink withCaptcha:NO];
+            return;
+        }
+    }
+}
+
+- (void)didFinishSaveDocumentRequest:(SHKRequest *)aRequest
+{
+    if ([self isRequestFinishedWithoutError:aRequest])
+    {
+        // convert to JSON
+        NSError *error = nil;
+        NSDictionary *responseDict = [NSJSONSerialization JSONObjectWithData:aRequest.data options:NSJSONReadingMutableContainers error:&error];
+        NSDictionary *documentDict = [[responseDict objectForKey:@"response"] lastObject];
+        NSString *ownerId = [documentDict objectForKey:@"owner_id"];
+        NSString *documentId = [documentDict objectForKey:@"did"];
+        if (documentDict && ownerId && documentId)
+        {
+            NSString *attachment = [NSString stringWithFormat:@"doc%@_%@", ownerId, documentId];
+            if (self.item.URL)
+                attachment = [attachment stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+            NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], attachment];
+           if (self.item.URL)
+			  {
+				  postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+			  }
+			  
+            //processing to next request
+            [self sendRequest:postToWallLink withCaptcha:NO];
+            return;
+        }
+    }
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -664,7 +758,10 @@
                         if (photoDict && photoId)
                         {
                             NSString *postToWallLink = [NSString stringWithFormat:@"https://api.vk.com/method/wall.post?owner_id=%@&access_token=%@&message=%@&attachment=%@", self.accessUserId, self.accessToken, [self URLEncodedString:self.item.title], photoId];
-                            
+									if (self.item.URL)
+									{
+										postToWallLink = [postToWallLink stringByAppendingFormat:@",%@", [self URLEncodedString:[self.item.URL absoluteString]]];
+									}
                             //processing to next request
                             [self sendRequest:postToWallLink withCaptcha:NO];
                             return;

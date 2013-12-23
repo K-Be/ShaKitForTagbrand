@@ -42,6 +42,8 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 @interface SHKFacebook()
 
 - (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
+- (void)showFacebookForm;
+
 - (void)sessionStateChanged:(FBSession *)session
                       state:(FBSessionState) state
                       error:(NSError *)error;
@@ -51,6 +53,14 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 
 @property (readwrite,strong) NSMutableSet* pendingConnections;
 @end
+
+
+@interface SHKFacebook (Private)
+
+- (FBSessionLoginBehavior)getLoginBehavior;
+
+@end
+
 
 @implementation SHKFacebook
 
@@ -117,7 +127,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		if (allowLoginUI) [[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Logging In...")];
         
         [FBSession setActiveSession:session];
-        [session openWithBehavior:FBSessionLoginBehaviorUseSystemAccountIfPresent
+		 [session openWithBehavior:[self getLoginBehavior]
 				completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
 					if (allowLoginUI) [[SHKActivityIndicator currentIndicator] hide];
 					[self sessionStateChanged:session state:state error:error];
@@ -126,6 +136,41 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
     }
 	
     return result;
+}
+
+
+- (void)requestPostPermissionsWithCompletion:(void(^)(FBSession *session, NSError *error))competion
+{
+		if ([FBSession.activeSession.permissions
+			  indexOfObject:@"publish_actions"] == NSNotFound) {	// we need at least this.SHKCONFIG(facebookWritePermissions
+			// No permissions found in session, ask for it
+			[self saveItemForLater:SHKPendingNone];
+			[[SHKActivityIndicator currentIndicator] displayActivity:SHKLocalizedString(@"Authenticating...")];
+			if(requestingPermisSHKFacebook == nil){
+				requestingPermisSHKFacebook = self;
+			}
+			[FBSession.activeSession requestNewPublishPermissions:SHKCONFIG(facebookWritePermissions)
+															  defaultAudience:FBSessionDefaultAudienceFriends
+															completionHandler:^(FBSession *session, NSError *error) {
+																[[SHKActivityIndicator currentIndicator] hide];
+																requestingPermisSHKFacebook = nil;
+																if (error) {
+																	UIAlertView *alertView = [[UIAlertView alloc]
+																									  initWithTitle:@"Error"
+																									  message:error.localizedDescription
+																									  delegate:nil
+																									  cancelButtonTitle:@"OK"
+																									  otherButtonTitles:nil];
+																	[alertView show];
+																}else{
+																	// If permissions granted, publish the story
+																	competion(session, error);
+																}
+																// the session watcher handles the error
+															}];
+		} else {
+			competion(FBSession.activeSession, nil);
+		}
 }
 
 /*
@@ -140,7 +185,7 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		if(requestingPermisSHKFacebook == self){
 			// in this case, we basically want to ignore the state change because the
 			// completion handler for the permission request handles the post.
-			// this happens when the permissions just get extended 
+			// this happens when the permissions just get extended
 		}else{
 			[self restoreItem];
 			
@@ -610,6 +655,39 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 		[FBSession.activeSession close];	// unhook us
 	}
 
+}
+
+@end
+
+#define SHK_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(v)  ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedAscending)
+
+#pragma mark -
+@implementation SHKFacebook (Private)
+
+- (FBSessionLoginBehavior)getLoginBehavior
+{
+	FBSessionLoginBehavior behavior = FBSessionLoginBehaviorWithFallbackToWebView;
+	NSString* facebookAccountIdentifier = @"com.apple.facebook";
+	if (SHK_SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6"))
+	{
+		facebookAccountIdentifier = ACAccountTypeIdentifierFacebook;
+	}
+	ACAccountStore* accountsStore = [[ACAccountStore alloc] init];
+	NSArray* accounts = [accountsStore accounts];
+	NSInteger indexOfFacebookAccount = [accounts indexOfObjectPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
+		ACAccount* account = obj;
+		ACAccountType* accountType = [account accountType];
+		NSString* typeIdentifier = [accountType identifier];
+		BOOL isNeedAccount = [typeIdentifier compare:facebookAccountIdentifier options:NSCaseInsensitiveSearch] == NSOrderedSame;
+		return isNeedAccount;
+	}];
+	
+	if (indexOfFacebookAccount != NSNotFound)
+	{
+		behavior = FBSessionLoginBehaviorUseSystemAccountIfPresent;
+	}
+	
+	return behavior;
 }
 
 @end

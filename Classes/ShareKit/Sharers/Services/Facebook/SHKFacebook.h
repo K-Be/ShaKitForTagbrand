@@ -28,6 +28,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SHKSharer.h"
+#import "FacebookSDK.h"
 
 @interface SHKFacebook : SHKSharer
 
@@ -42,4 +43,9 @@
 // keep in mind of you add requests as a subclass, you need to cancel them yourself and remove
 // them from the pending set. The base version will cancel anything that responds to the cancel selector
 - (void)cancelPendingRequests;
+
+- (BOOL)authorizeWithoutPost;
+- (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
+- (void)requestPostPermissionsWithCompletion:(void(^)(FBSession *session, NSError *error))competion;
+
 @end
