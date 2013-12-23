@@ -28,7 +28,7 @@
 
 #import <Foundation/Foundation.h>
 #import "SHKSharer.h"
-#import "FacebookSDK.h"
+#import <FacebookSDK/FacebookSDK.h>
 
 @interface SHKFacebook : SHKSharer
 
