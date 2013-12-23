@@ -42,7 +42,6 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 @interface SHKFacebook()
 
 - (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLog;
-- (void)showFacebookForm;
 
 - (void)sessionStateChanged:(FBSession *)session
                       state:(FBSessionState) state
@@ -101,6 +100,26 @@ static SHKFacebook *requestingPermisSHKFacebook=nil;
 	}
 	[self.pendingConnections removeAllObjects];
 }
+
+
+- (BOOL)authorizeWithoutPost
+{
+	BOOL result = [self isAuthorized];
+	
+	if (!result)
+	{
+		if (authingSHKFacebook != nil && authingSHKFacebook != self)
+		{
+			authingSHKFacebook = nil;
+		}
+		authingSHKFacebook = self;
+		
+		result = [self openSessionWithAllowLoginUI:YES];
+	}
+	
+	return result;
+}
+
 
 - (BOOL)openSessionWithAllowLoginUI:(BOOL)allowLoginUI {
 	// because this routine is used both for checking if we are authed and
